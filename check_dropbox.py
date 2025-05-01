@@ -6,24 +6,38 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 # Load environment variables
-DROPBOX_TOKEN = os.environ['DROPBOX_TOKEN']
+DROPBOX_REFRESH = os.environ['DROPBOX_REFRESH']
+DROPBOX_APP_KEY = os.environ['DROPBOX_APP_KEY']
+DROPBOX_APP_SECRET = os.environ['DROPBOX_APP_SECRET']
 TELEGRAM_BOT_TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
 TELEGRAM_CHAT_ID = os.environ['TELEGRAM_CHAT_ID']
 EMAIL_USER = os.environ['EMAIL_USER']
 EMAIL_PASS = os.environ['EMAIL_PASS']
 EMAIL_TO = os.environ['EMAIL_TO']
 
+def get_dropbox_access_token():
+    url = "https://api.dropbox.com/oauth2/token"
+    auth = (DROPBOX_APP_KEY, DROPBOX_APP_SECRET)
+    data = {
+        "grant_type": "refresh_token",
+        "refresh_token": DROPBOX_REFRESH
+    }
+    response = requests.post(url, auth=auth, data=data)
+    response.raise_for_status()
+    return response.json()['access_token']
+
 def get_mp4_count():
+    access_token = get_dropbox_access_token()
     url = "https://api.dropboxapi.com/2/files/list_folder"
     headers = {
-        "Authorization": f"Bearer {DROPBOX_TOKEN}",
+        "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"
     }
     data = { "path": "/instaclipper/To_upload" }
     response = requests.post(url, headers=headers, json=data)
     response.raise_for_status()
     entries = response.json().get('entries', [])
-    return len([e for e in entries if e['name'].lower().endswith('.mp4')])
+    return len([e for e in entries if e['name'].endswith('.mp4')])
 
 def send_telegram_message(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
