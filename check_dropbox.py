@@ -1,9 +1,10 @@
 import os
-import requests
+import dropbox
 import smtplib
 import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import requests
 
 # Load environment variables
 DROPBOX_REFRESH = os.environ['DROPBOX_REFRESH']
@@ -15,29 +16,15 @@ EMAIL_USER = os.environ['EMAIL_USER']
 EMAIL_PASS = os.environ['EMAIL_PASS']
 EMAIL_TO = os.environ['EMAIL_TO']
 
-def get_dropbox_access_token():
-    url = "https://api.dropbox.com/oauth2/token"
-    auth = (DROPBOX_APP_KEY, DROPBOX_APP_SECRET)
-    data = {
-        "grant_type": "refresh_token",
-        "refresh_token": DROPBOX_REFRESH
-    }
-    response = requests.post(url, auth=auth, data=data)
-    response.raise_for_status()
-    return response.json()['access_token']
-
 def get_mp4_count():
-    access_token = get_dropbox_access_token()
-    url = "https://api.dropboxapi.com/2/files/list_folder"
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json"
-    }
-    data = { "path": "/instaclipper/To_upload" }
-    response = requests.post(url, headers=headers, json=data)
-    response.raise_for_status()
-    entries = response.json().get('entries', [])
-    return len([e for e in entries if e['name'].endswith('.mp4')])
+    dbx = dropbox.Dropbox(
+        oauth2_refresh_token=DROPBOX_REFRESH,
+        app_key=DROPBOX_APP_KEY,
+        app_secret=DROPBOX_APP_SECRET
+    )
+    folder_path = "/instaclipper/To_upload"
+    result = dbx.files_list_folder(folder_path)
+    return len([entry for entry in result.entries if entry.name.endswith('.mp4')])
 
 def send_telegram_message(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
@@ -62,11 +49,8 @@ def main():
         count = get_mp4_count()
     except Exception as e:
         error_msg = f"❌ Failed to check Dropbox files: {str(e)}"
-        try:
-            send_telegram_message(error_msg)
-            send_email("Dropbox Alert Error", error_msg)
-        except:
-            pass
+        send_telegram_message(error_msg)
+        send_email("Dropbox Alert Error", error_msg)
         return
 
     message = ""
