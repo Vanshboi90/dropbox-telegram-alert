@@ -62,8 +62,11 @@ def main():
         count = get_mp4_count()
     except Exception as e:
         error_msg = f"❌ Failed to check Dropbox files: {str(e)}"
-        send_telegram_message(error_msg)
-        send_email("Dropbox Alert Error", error_msg)
+        try:
+            send_telegram_message(error_msg)
+            send_email("Dropbox Alert Error", error_msg)
+        except:
+            pass
         return
 
     message = ""
