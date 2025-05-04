@@ -54,11 +54,13 @@ def main():
         return
 
     message = ""
-    if count == 16:
-        message = "⚠️ 16 videos remaining. 2 days until you run out of content."
-    elif count == 8:
-        message = "⚠️ 8 videos remaining. 1 day until you run out of content."
-
+    if count == 6:
+        message = "⚠️ 6 videos remaining. 3 days until you run out of content."
+    elif count == 4:
+        message = "⚠️ 4 videos remaining. 2 day until you run out of content."
+    elif count == 4:
+        message = "⚠️ 2 videos remaining. 1 day until you run out of content."
+    
     if message:
         send_telegram_message(message)
         send_email("Dropbox Alert", message)
