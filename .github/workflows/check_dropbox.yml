@@ -2,7 +2,7 @@ name: Check Dropbox Video Count
 
 on:
   schedule:
-    - cron: "0 8 * * *"  # Runs every day at 8 AM UTC
+    - cron: "30 21 * * *"  # Runs daily at 3:00 AM IST
   workflow_dispatch:     # Allow manual trigger
 
 jobs:
